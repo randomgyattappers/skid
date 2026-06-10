@@ -1,5 +1,3 @@
-getgenv().PremiumLoaded = true
-
 local Globals = getgenv()
 
 local Players = game:GetService("Players")
@@ -160,7 +158,7 @@ local AutoGatlingRunning = false
 local GatlingExecuted = false
 local AutoPremiumRunning = false
 local StackerErrorShown = false
-local PremiumLoaded = false
+local PremiumLoaded = true
 
 local MaxPathDistance = 300 -- default
 local MilMarker = nil
@@ -188,7 +186,7 @@ local DefaultSettings = {
     AutoReady = false,
     AutoChain = false,
     AutoGatling = false,
-    AutoPremium = false,
+    AutoPremium = true,
     SupportCaravan = false,
     AutoDJ = false,
     AutoNecro = false,
@@ -938,39 +936,7 @@ end
 local IsCurrentlyLoading = false
 
 function TDS:Addons()
-    if GameState == "LOBBY" then return false end
-    if PremiumLoaded then return true end
-    
-    if IsCurrentlyLoading then 
-        while IsCurrentlyLoading do task.wait(0.1) end
-        return PremiumLoaded 
-    end
-
-    local originalPlace = self.Place
-    IsCurrentlyLoading = true
-
-    local url = "https://api.jnkie.com/api/v1/luascripts/public/57fe397f76043ce06afad24f07528c9f93e97730930242f57134d0b60a2d250b/download"
-    local success, code = pcall(game.HttpGet, game, url)
-
-    if not success or not code then
-        IsCurrentlyLoading = false
-        return false
-    end
-
-    local func = loadstring(code)
-    if not func then
-        IsCurrentlyLoading = false
-        return false
-    end
-
-    pcall(func)
-
-    while self.Place == originalPlace do
-        task.wait(0.1)
-    end
-
     PremiumLoaded = true
-    IsCurrentlyLoading = false
     return true
 end
 
@@ -1574,11 +1540,11 @@ local Interactive = Window:Tab({Title = "Interactive", Icon = "mouse-pointer-cli
         end
     })
 
-    Interactive:Section({Title = "Premium"})
+    Interactive:Section({Title = "Premium (FREE)"})
 
     Interactive:Toggle({
-        Title = "Auto Load Premium (In-Game)",
-        Desc = "Automatically loads the key system when you join a match.",
+        Title = "Premium Auto-Loaded (FREE)",
+        Desc = "Premium features are unlocked for free.",
         Value = Globals.AutoPremium,
         Callback = function(v)
             SetSetting("AutoPremium", v)
@@ -1586,8 +1552,8 @@ local Interactive = Window:Tab({Title = "Interactive", Icon = "mouse-pointer-cli
     })
     
     local UnlockBtn = Interactive:Button({
-        Title = "Unlock Premium Features",
-        Desc = "Required Key System to access Premium features",
+        Title = "Premium Features",
+        Desc = "All premium features are already unlocked!",
         Callback = function()
             task.spawn(function()
                 Window:Notify({Title = "ADS", Desc = "Loading Key System...", Time = 3})
@@ -3221,7 +3187,7 @@ function TDS:Mode(difficulty, code)
         return false 
     end
 
-    if targetCode ~= "" and not MarketplaceService:UserOwnsGamePassAsync(LocalPlayer.UserId, 10518590) then
+    if false then -- GAMEPASS CHECK BYPASSED (FREE)
         local ServerType = game:GetService('RobloxReplicatedStorage').GetServerType:InvokeServer()
         
         if ServerType ~= "VIPServer" then
@@ -3441,7 +3407,7 @@ function TDS:GameInfo(name, list)
 
     CastModifierVote(modifiers)
 
-    if MarketplaceService:UserOwnsGamePassAsync(LocalPlayer.UserId, 10518590) or game:GetService("ReplicatedStorage").StateReplicators.GameStateReplicator:GetAttribute("IsPrivateServer") == true then
+    if true then -- GAMEPASS CHECK BYPASSED (FREE)
         SelectMapOverride(name, "vip")
         Logger:Log("Selected map: " .. name)
         repeat task.wait(1) until PlayerGui:FindFirstChild("ReactUniversalHotbar")
@@ -3496,19 +3462,8 @@ function TDS:Place(TName, px, py, pz, ...)
     local args = {...}
     local isStacking = args[#args] == "stack" or args[#args] == true
 
-    if isStacking and not PremiumLoaded and GameState == "GAME" then
-        Window:Notify({
-            Title = "ADS",
-            Desc = "Stacking requires Premium. Automatically loading key system...",
-            Time = 3,
-            Type = "normal"
-        })
+    if false then -- STACKING PREMIUM CHECK BYPASSED (FREE)
 
-        local success = self:Addons()
-        if success then 
-            return self:Place(TName, px, py, pz, unpack(args))
-        end
-        return false
     end
 
     if GameState ~= "GAME" then
@@ -3708,35 +3663,11 @@ local function StartAutoGatling()
 end
 
 local function StartAutoPremium()
-    if AutoPremiumRunning or not Globals.AutoPremium or PremiumLoaded then return end
+    if AutoPremiumRunning or PremiumLoaded then return end
     AutoPremiumRunning = true
-
-    task.spawn(function()
-        if GameState == "GAME" then
-            Window:Notify({
-                Title = "ADS",
-                Desc = "Loading Key System...",
-                Time = 3,
-                Type = "normal"
-            })
-
-            local success = TDS:Addons()
-            
-            if success then
-                Window:Notify({
-                    Title = "ADS",
-                    Desc = "Premium Unlocked!",
-                    Time = 3,
-                    Type = "normal"
-                })
-            else
-                task.wait(5)
-                AutoPremiumRunning = false 
-            end
-        else
-            AutoPremiumRunning = false
-        end
-    end)
+    PremiumLoaded = true
+    Window:Notify({Title = "FREE", Desc = "Premium features unlocked for free!", Time = 3, Type = "normal"})
+    AutoPremiumRunning = false
 end
 
 local function StartAutoPickups()
